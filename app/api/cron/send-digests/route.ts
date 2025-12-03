@@ -5,7 +5,7 @@ import { getUnsentAlerts, markAlertsAsSent } from '@/lib/analysis/alerts';
 import { render } from '@react-email/components';
 import DigestEmail from '@/lib/email/templates/digest';
 import { gte } from 'drizzle-orm';
-import { startOfDay } from 'date-fns';
+import Inbound from 'inboundemail';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -100,37 +100,53 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    // Step 5: Create digest record (email sending deferred to future implementation)
+    // Step 5: Send email via Inbound
     const alertIds = unsentAlerts.map(a => a.id);
+    let emailStatus: 'sent' | 'failed' = 'failed';
 
+    const inboundApiKey = process.env.INBOUND_API_KEY;
+    const emailFrom = process.env.EMAIL_FROM;
+    const emailTo = process.env.EMAIL_TO;
+
+    if (inboundApiKey && emailFrom && emailTo) {
+      try {
+        const inbound = new Inbound({ apiKey: inboundApiKey });
+
+        const subject = hasUrgentAlerts
+          ? `🔥 HN Pulse: ${unsentAlerts.length} URGENT breakout ${unsentAlerts.length === 1 ? 'story' : 'stories'}`
+          : `📈 HN Pulse: ${unsentAlerts.length} breakout ${unsentAlerts.length === 1 ? 'story' : 'stories'}`;
+
+        await inbound.emails.send({
+          from: emailFrom,
+          to: [emailTo],
+          subject,
+          html: emailHtml,
+        });
+
+        emailStatus = 'sent';
+        console.log(`Email sent successfully to ${emailTo}`);
+      } catch (emailError) {
+        console.error('Failed to send email:', emailError);
+        emailStatus = 'failed';
+      }
+    } else {
+      console.warn('Email not configured - missing INBOUND_API_KEY, EMAIL_FROM, or EMAIL_TO');
+      emailStatus = 'failed';
+    }
+
+    // Step 6: Create digest record
     await db.insert(emailDigests).values({
       sentAt: new Date(),
       alertIds,
       alertCount: unsentAlerts.length,
       digestType,
-      status: 'pending', // Will be 'sent' when we integrate with inbound.new
+      status: emailStatus,
     });
 
-    // Step 6: Mark alerts as sent
+    // Step 7: Mark alerts as sent (regardless of email status to avoid re-sending)
     await markAlertsAsSent(alertIds);
 
-    console.log('Email digest queued successfully');
-
-    // TODO: When ready to send emails, integrate with inbound.new here
-    // Example:
-    // await fetch('https://api.inbound.new/send', {
-    //   method: 'POST',
-    //   headers: {
-    //     'Authorization': `Bearer ${process.env.INBOUND_API_KEY}`,
-    //     'Content-Type': 'application/json',
-    //   },
-    //   body: JSON.stringify({
-    //     from: process.env.EMAIL_FROM,
-    //     to: process.env.EMAIL_TO,
-    //     subject: `HN Pulse: ${unsentAlerts.length} breakout stories`,
-    //     html: emailHtml,
-    //   }),
-    // });
+    console.log(`Email digest ${emailStatus === 'sent' ? 'sent' : 'queued (email failed)'} successfully`);
 
     const executionTime = Date.now() - startTime;
 
@@ -141,7 +157,7 @@ export async function GET(request: NextRequest) {
       digest: {
         type: digestType,
         alerts_count: unsentAlerts.length,
-        status: 'queued',
+        email_status: emailStatus,
       },
       quota: {
         sent: digestsSentToday.length + 1,
