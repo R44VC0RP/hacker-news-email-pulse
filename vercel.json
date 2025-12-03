@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/fetch-posts",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/recalculate-benchmarks",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/send-digests",
+      "schedule": "0 */4 * * *"
+    }
+  ]
+}
