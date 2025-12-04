@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { emailDigests } from '@/lib/db/schema';
+import { emailDigests, subscribers } from '@/lib/db/schema';
 import { getUnsentAlerts, markAlertsAsSent } from '@/lib/analysis/alerts';
 import { render } from '@react-email/components';
-import DigestEmail from '@/lib/email/templates/digest';
-import { gte } from 'drizzle-orm';
+import DigestEmail from '@/emails/digest';
+import { gte, eq } from 'drizzle-orm';
 import Inbound from 'inboundemail';
 
 export const maxDuration = 60;
@@ -100,37 +100,60 @@ export async function GET(request: NextRequest) {
       })
     );
 
-    // Step 5: Send email via Inbound
+    // Step 5: Get all active subscribers
     const alertIds = unsentAlerts.map(a => a.id);
-    let emailStatus: 'sent' | 'failed' = 'failed';
+    const activeSubscribers = await db
+      .select()
+      .from(subscribers)
+      .where(eq(subscribers.isActive, true));
+
+    console.log(`Found ${activeSubscribers.length} active subscribers`);
+
+    let emailStatus: 'sent' | 'failed' | 'partial' = 'failed';
+    let sentCount = 0;
+    let failedCount = 0;
 
     const inboundApiKey = process.env.INBOUND_API_KEY;
     const emailFrom = process.env.EMAIL_FROM;
-    const emailTo = process.env.EMAIL_TO;
 
-    if (inboundApiKey && emailFrom && emailTo) {
-      try {
-        const inbound = new Inbound({ apiKey: inboundApiKey });
+    if (inboundApiKey && emailFrom && activeSubscribers.length > 0) {
+      const inbound = new Inbound({ apiKey: inboundApiKey });
 
-        const subject = hasUrgentAlerts
-          ? `🔥 HN Pulse: ${unsentAlerts.length} URGENT breakout ${unsentAlerts.length === 1 ? 'story' : 'stories'}`
-          : `📈 HN Pulse: ${unsentAlerts.length} breakout ${unsentAlerts.length === 1 ? 'story' : 'stories'}`;
+      const subject = hasUrgentAlerts
+        ? `🔥 HN Pulse: ${unsentAlerts.length} URGENT breakout ${unsentAlerts.length === 1 ? 'story' : 'stories'}`
+        : `📈 HN Pulse: ${unsentAlerts.length} breakout ${unsentAlerts.length === 1 ? 'story' : 'stories'}`;
 
-        await inbound.emails.send({
-          from: emailFrom,
-          to: [emailTo],
-          subject,
-          html: emailHtml,
-        });
+      // Send to each subscriber
+      for (const subscriber of activeSubscribers) {
+        try {
+          await inbound.emails.send({
+            from: emailFrom,
+            to: [subscriber.email],
+            subject,
+            html: emailHtml,
+          });
+          sentCount++;
+          console.log(`Email sent to ${subscriber.email}`);
+        } catch (emailError) {
+          failedCount++;
+          console.error(`Failed to send to ${subscriber.email}:`, emailError);
+        }
+      }
 
+      if (sentCount === activeSubscribers.length) {
         emailStatus = 'sent';
-        console.log(`Email sent successfully to ${emailTo}`);
-      } catch (emailError) {
-        console.error('Failed to send email:', emailError);
+      } else if (sentCount > 0) {
+        emailStatus = 'partial';
+      } else {
         emailStatus = 'failed';
       }
+
+      console.log(`Sent ${sentCount}/${activeSubscribers.length} emails`);
+    } else if (activeSubscribers.length === 0) {
+      console.warn('No active subscribers');
+      emailStatus = 'sent'; // Nothing to send, consider it success
     } else {
-      console.warn('Email not configured - missing INBOUND_API_KEY, EMAIL_FROM, or EMAIL_TO');
+      console.warn('Email not configured - missing INBOUND_API_KEY or EMAIL_FROM');
       emailStatus = 'failed';
     }
 
@@ -158,6 +181,11 @@ export async function GET(request: NextRequest) {
         type: digestType,
         alerts_count: unsentAlerts.length,
         email_status: emailStatus,
+      },
+      subscribers: {
+        total: activeSubscribers.length,
+        sent: sentCount,
+        failed: failedCount,
       },
       quota: {
         sent: digestsSentToday.length + 1,

@@ -67,6 +67,19 @@ export const emailDigests = pgTable('email_digests', {
   statusIdx: index('idx_digests_status').on(table.status),
 }));
 
+// Email subscribers
+export const subscribers = pgTable('subscribers', {
+  id: serial('id').primaryKey(),
+  email: text('email').notNull().unique(),
+  isVerified: boolean('is_verified').default(false),
+  isActive: boolean('is_active').default(true),
+  subscribedAt: timestamp('subscribed_at').defaultNow(),
+  unsubscribedAt: timestamp('unsubscribed_at'),
+}, (table) => ({
+  emailIdx: uniqueIndex('idx_subscribers_email').on(table.email),
+  activeIdx: index('idx_subscribers_active').on(table.isActive),
+}));
+
 // Cached percentile thresholds for performance
 export const growthBenchmarks = pgTable('growth_benchmarks', {
   id: serial('id').primaryKey(),
