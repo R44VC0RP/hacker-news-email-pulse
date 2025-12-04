@@ -88,7 +88,7 @@ export default function Home() {
               Hacker News Pulse
             </p>
             <p className="text-[11px] text-[#828282] mb-3">
-              3 breakout stories · Dec 4
+              8 breakout stories · Dec 4
             </p>
 
             <hr className="border-[#ff6600] mb-3" />
@@ -96,11 +96,11 @@ export default function Home() {
             {/* Story 1 */}
             <p className="text-[13px] text-black leading-[18px] mb-0">
               <span className="text-[#828282]">1.</span>{' '}
-              <span className="text-black">Show HN: I built a tool that detects breakout stories</span>
-              <span className="text-[11px] text-[#828282]"> (github.com)</span>
+              <span className="text-black">Ghostty is now non-profit</span>
+              <span className="text-[11px] text-[#828282]"> (mitchellh.com)</span>
             </p>
             <p className="text-[9px] text-[#828282] pl-[18px] mb-2">
-              312 pts · pg · 47m · 89 comments · <span className="font-bold text-[#ff6600]">99th pctl</span> 🔥
+              738 pts · vrnvu · 6h · 146 comments · <span className="font-bold text-[#ff6600]">99th pctl</span> 🔥
             </p>
 
             <hr className="border-[#e0e0e0] my-1.5" />
@@ -108,11 +108,11 @@ export default function Home() {
             {/* Story 2 */}
             <p className="text-[13px] text-black leading-[18px] mb-0">
               <span className="text-[#828282]">2.</span>{' '}
-              <span className="text-black">Why SQLite is so great for embedded applications</span>
-              <span className="text-[11px] text-[#828282]"> (sqlite.org)</span>
+              <span className="text-black">Everyone in Seattle hates AI</span>
+              <span className="text-[11px] text-[#828282]"> (jonready.com)</span>
             </p>
             <p className="text-[9px] text-[#828282] pl-[18px] mb-2">
-              187 pts · dang · 1h · 42 comments · <span className="font-bold text-[#ff6600]">98th pctl</span>
+              569 pts · mips_avatar · 5h · 531 comments · <span className="font-bold text-[#ff6600]">99th pctl</span> 🔥
             </p>
 
             <hr className="border-[#e0e0e0] my-1.5" />
@@ -120,10 +120,77 @@ export default function Home() {
             {/* Story 3 */}
             <p className="text-[13px] text-black leading-[18px] mb-0">
               <span className="text-[#828282]">3.</span>{' '}
-              <span className="text-black">Ask HN: What are you working on this weekend?</span>
+              <span className="text-black">Reverse engineering a $1B Legal AI tool exposed 100k+ confidential files</span>
+              <span className="text-[11px] text-[#828282]"> (alexschapiro.com)</span>
             </p>
-            <p className="text-[9px] text-[#828282] pl-[18px]">
-              94 pts · whoishiring · 1h · 156 comments · <span className="font-bold text-[#ff6600]">95th pctl</span>
+            <p className="text-[9px] text-[#828282] pl-[18px] mb-2">
+              479 pts · bearsyankees · 7h · 156 comments · <span className="font-bold text-[#ff6600]">98th pctl</span>
+            </p>
+
+            <hr className="border-[#e0e0e0] my-1.5" />
+
+            {/* Story 4 */}
+            <p className="text-[13px] text-black leading-[18px] mb-0">
+              <span className="text-[#828282]">4.</span>{' '}
+              <span className="text-black">Valve reveals it&apos;s the architect behind a push to bring Windows games to Arm</span>
+              <span className="text-[11px] text-[#828282]"> (theverge.com)</span>
+            </p>
+            <p className="text-[9px] text-[#828282] pl-[18px] mb-2">
+              405 pts · evolve2k · 7h · 449 comments · <span className="font-bold text-[#ff6600]">97th pctl</span>
+            </p>
+
+            <hr className="border-[#e0e0e0] my-1.5" />
+
+            {/* Story 5 */}
+            <p className="text-[13px] text-black leading-[18px] mb-0">
+              <span className="text-[#828282]">5.</span>{' '}
+              <span className="text-black">RCE Vulnerability in React and Next.js</span>
+              <span className="text-[11px] text-[#828282]"> (github.com/vercel)</span>
+            </p>
+            <p className="text-[9px] text-[#828282] pl-[18px] mb-2">
+              390 pts · rayhaanj · 9h · 123 comments · <span className="font-bold text-[#ff6600]">97th pctl</span>
+            </p>
+
+            <hr className="border-[#e0e0e0] my-1.5" />
+
+            {/* Story 6 */}
+            <p className="text-[13px] text-black leading-[18px] mb-0">
+              <span className="text-[#828282]">6.</span>{' '}
+              <span className="text-black">Micron Announces Exit from Crucial Consumer Business</span>
+              <span className="text-[11px] text-[#828282]"> (micron.com)</span>
+            </p>
+            <p className="text-[9px] text-[#828282] pl-[18px] mb-2">
+              338 pts · simlevesque · 7h · 157 comments · <span className="font-bold text-[#ff6600]">96th pctl</span>
+            </p>
+
+            <hr className="border-[#e0e0e0] my-1.5" />
+
+            {/* Story 7 */}
+            <p className="text-[13px] text-black leading-[18px] mb-0">
+              <span className="text-[#828282]">7.</span>{' '}
+              <span className="text-black">1D Conway&apos;s Life glider found, 3.7B cells long</span>
+              <span className="text-[11px] text-[#828282]"> (conwaylife.com)</span>
+            </p>
+            <p className="text-[9px] text-[#828282] pl-[18px] mb-2">
+              318 pts · nooks · 8h · 114 comments · <span className="font-bold text-[#ff6600]">96th pctl</span>
+            </p>
+
+            <hr className="border-[#e0e0e0] my-1.5" />
+
+            {/* Story 8 */}
+            <p className="text-[13px] text-black leading-[18px] mb-0">
+              <span className="text-[#828282]">8.</span>{' '}
+              <span className="text-black">Show HN: I built a dashboard to compare mortgage rates across 120 credit unions</span>
+              <span className="text-[11px] text-[#828282]"> (finfam.app)</span>
+            </p>
+            <p className="text-[9px] text-[#828282] pl-[18px] mb-3">
+              109 pts · mhashemi · 4h · 42 comments · <span className="font-bold text-[#ff6600]">95th pctl</span>
+            </p>
+
+            <hr className="border-[#ff6600] my-3" />
+
+            <p className="text-[9px] text-[#828282]">
+              <a href="https://inbound.new?utm_source=hnpulse&utm_medium=email&utm_campaign=digest" className="text-[#828282] no-underline hover:underline">powered by inbound</a>
             </p>
           </div>
         </div>
@@ -131,6 +198,8 @@ export default function Home() {
         {/* Footer */}
         <p className="text-[9px] text-[#828282]">
           <a href="https://news.ycombinator.com" className="text-[#828282] no-underline hover:underline">news.ycombinator.com</a>
+          {' · '}
+          <a href="https://inbound.new?utm_source=hnpulse&utm_medium=web&utm_campaign=homepage" className="text-[#828282] no-underline hover:underline">powered by inbound</a>
         </p>
       </div>
     </div>
