@@ -112,9 +112,12 @@ export async function GET(request: NextRequest) {
     if (inboundApiKey && emailFrom && activeSubscribers.length > 0) {
       const inbound = new Inbound({ apiKey: inboundApiKey });
 
-      const subject = hasUrgentAlerts
-        ? `🔥 HN Pulse: ${unsentAlerts.length} URGENT breakout ${unsentAlerts.length === 1 ? 'story' : 'stories'}`
-        : `📈 HN Pulse: ${unsentAlerts.length} breakout ${unsentAlerts.length === 1 ? 'story' : 'stories'}`;
+      // Use top story title as subject
+      const topStory = unsentAlerts[0];
+      const otherCount = unsentAlerts.length - 1;
+      const subject = otherCount > 0
+        ? `${topStory.post.title} (+${otherCount} more)`
+        : topStory.post.title;
 
       // Send personalized email to each subscriber
       for (const subscriber of activeSubscribers) {
