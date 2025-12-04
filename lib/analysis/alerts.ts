@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import { alerts, posts, snapshots } from '@/lib/db/schema';
-import { eq, desc, and, gte } from 'drizzle-orm';
+import { eq, desc, and, gte, sql } from 'drizzle-orm';
 import { getAgeBucket, calculatePostVelocity, getRecentSnapshots } from './velocity';
 import { getGrowthBenchmarks, calculatePercentile, type BenchmarkMap } from './benchmarks';
 
@@ -187,7 +187,7 @@ export async function detectBreakoutPosts(): Promise<AlertCandidate[]> {
 }
 
 /**
- * Get recent unsent alerts
+ * Get recent unsent alerts, excluding posts that have already been sent in a previous digest
  */
 export async function getUnsentAlerts(limit = 20): Promise<Array<typeof alerts.$inferSelect & { post: typeof posts.$inferSelect }>> {
   const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
@@ -202,7 +202,9 @@ export async function getUnsentAlerts(limit = 20): Promise<Array<typeof alerts.$
     .where(
       and(
         eq(alerts.isSent, false),
-        gte(alerts.detectedAt, fourHoursAgo)
+        gte(alerts.detectedAt, fourHoursAgo),
+        // Exclude posts that have already had any alert sent (prevents duplicate posts in digests)
+        sql`${alerts.postId} NOT IN (SELECT post_id FROM alerts WHERE is_sent = true)`
       )
     )
     .orderBy(desc(alerts.percentile), desc(alerts.detectedAt))
@@ -215,16 +217,25 @@ export async function getUnsentAlerts(limit = 20): Promise<Array<typeof alerts.$
 }
 
 /**
- * Mark alerts as sent
+ * Mark alerts as sent - marks ALL alerts for the posts that were included in the digest
+ * This ensures a post won't appear in future digests even if it had multiple alert types
  */
 export async function markAlertsAsSent(alertIds: number[]): Promise<void> {
   if (alertIds.length === 0) return;
 
-  // Update in batches
-  for (const alertId of alertIds) {
-    await db
-      .update(alerts)
-      .set({ isSent: true })
-      .where(eq(alerts.id, alertId));
-  }
+  // First, get the post IDs for all the alerts being sent
+  const alertsToMark = await db
+    .select({ postId: alerts.postId })
+    .from(alerts)
+    .where(sql`${alerts.id} IN (${sql.join(alertIds.map(id => sql`${id}`), sql`, `)})`);
+
+  const postIds = [...new Set(alertsToMark.map(a => a.postId))];
+
+  if (postIds.length === 0) return;
+
+  // Mark ALL alerts for these posts as sent (not just the specific alert IDs)
+  await db
+    .update(alerts)
+    .set({ isSent: true })
+    .where(sql`${alerts.postId} IN (${sql.join(postIds.map(id => sql`${id}`), sql`, `)})`);
 }
