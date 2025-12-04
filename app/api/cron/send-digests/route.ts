@@ -92,15 +92,7 @@ export async function GET(request: NextRequest) {
 
     console.log(`Creating ${digestType} digest with ${unsentAlerts.length} alerts`);
 
-    // Step 4: Render email template
-    const emailHtml = await render(
-      DigestEmail({
-        alerts: unsentAlerts,
-        digestDate: new Date(),
-      })
-    );
-
-    // Step 5: Get all active subscribers
+    // Step 4: Get all active subscribers
     const alertIds = unsentAlerts.map(a => a.id);
     const activeSubscribers = await db
       .select()
@@ -115,6 +107,7 @@ export async function GET(request: NextRequest) {
 
     const inboundApiKey = process.env.INBOUND_API_KEY;
     const emailFrom = process.env.EMAIL_FROM;
+    const baseUrl = "https://hn.ryan.ceo";
 
     if (inboundApiKey && emailFrom && activeSubscribers.length > 0) {
       const inbound = new Inbound({ apiKey: inboundApiKey });
@@ -123,9 +116,19 @@ export async function GET(request: NextRequest) {
         ? `🔥 HN Pulse: ${unsentAlerts.length} URGENT breakout ${unsentAlerts.length === 1 ? 'story' : 'stories'}`
         : `📈 HN Pulse: ${unsentAlerts.length} breakout ${unsentAlerts.length === 1 ? 'story' : 'stories'}`;
 
-      // Send to each subscriber
+      // Send personalized email to each subscriber
       for (const subscriber of activeSubscribers) {
         try {
+          // Render personalized email with subscriber's unsubscribe link
+          const emailHtml = await render(
+            DigestEmail({
+              alerts: unsentAlerts,
+              digestDate: new Date(),
+              subscriberEmail: subscriber.email,
+              baseUrl,
+            })
+          );
+
           await inbound.emails.send({
             from: emailFrom,
             to: [subscriber.email],

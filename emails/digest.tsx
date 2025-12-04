@@ -31,6 +31,8 @@ interface AlertData {
 interface DigestEmailProps {
   alerts?: AlertData[];
   digestDate?: Date;
+  subscriberEmail?: string;
+  baseUrl?: string;
 }
 
 // Preview data for React Email dev server
@@ -102,7 +104,10 @@ function formatAge(minutes: number): string {
 export default function DigestEmail({
   alerts = previewAlerts,
   digestDate = new Date(),
+  subscriberEmail = 'preview@example.com',
+  baseUrl = 'https://hn.ryan.ceo',
 }: DigestEmailProps) {
+  const unsubscribeUrl = `${baseUrl}/unsubscribe?email=${encodeURIComponent(subscriberEmail)}`;
   const previewText = `${alerts.length} breakout ${alerts.length === 1 ? 'story' : 'stories'} on HN`;
 
   return (
@@ -169,6 +174,8 @@ export default function DigestEmail({
 
             <Text className="m-0 text-[9px] text-hn-gray">
               <Link href="https://inbound.new?utm_source=hnpulse&utm_medium=email&utm_campaign=digest" className="text-hn-gray no-underline">powered by inbound</Link>
+              {' · '}
+              <Link href={unsubscribeUrl} className="text-hn-gray no-underline">unsubscribe</Link>
             </Text>
           </Container>
         </Body>
