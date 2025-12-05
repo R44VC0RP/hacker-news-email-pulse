@@ -188,6 +188,7 @@ export async function detectBreakoutPosts(): Promise<AlertCandidate[]> {
 
 /**
  * Get recent unsent alerts, excluding posts that have already been sent in a previous digest
+ * Deduplicates by postId, keeping only the highest-percentile alert per post
  */
 export async function getUnsentAlerts(limit = 20): Promise<Array<typeof alerts.$inferSelect & { post: typeof posts.$inferSelect }>> {
   const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
@@ -207,10 +208,19 @@ export async function getUnsentAlerts(limit = 20): Promise<Array<typeof alerts.$
         sql`${alerts.postId} NOT IN (SELECT post_id FROM alerts WHERE is_sent = true)`
       )
     )
-    .orderBy(desc(alerts.percentile), desc(alerts.detectedAt))
-    .limit(limit);
+    .orderBy(desc(alerts.percentile), desc(alerts.detectedAt));
 
-  return unsentAlerts.map(row => ({
+  // Deduplicate by postId, keeping the highest-percentile alert for each post
+  const seenPosts = new Set<number>();
+  const dedupedAlerts = unsentAlerts.filter(row => {
+    if (seenPosts.has(row.alert.postId)) {
+      return false;
+    }
+    seenPosts.add(row.alert.postId);
+    return true;
+  }).slice(0, limit);
+
+  return dedupedAlerts.map(row => ({
     ...row.alert,
     post: row.post,
   }));
